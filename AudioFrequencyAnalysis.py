@@ -1,152 +1,185 @@
+# The files noise01.csv to noise10.csv contain a random noise from a real
+# instrument, measuring the intensity of light as a function of the voltage on a light
+# source. The voltage goes from 0.1V to 1.0V, encoded in the filename. (0.1V, 0.2V, 0.3V,
+# 0.4V, 0.5V, 1.0V). 
 
-# coding: utf-8
+# Here I prove that the noise is due to the Poisson distribution of the discrete
+# photons 
 
-# # Note: I have reviewed this individual's GitHub and implemented similar code in my principal component analysis: https://ocefpaf.github.io/python4oceanographers/blog/2014/12/01/PCA/
-# 
+# In[321]:
 
-# Consider the data set in file food.csv, describing the eating habits of the population England,
-# Wales, Scotland and Ireland. Calculate the Principal components and analyze the results.
-
-# In[92]:
-
-# Using pandas library for CSV reading and table manipulation
-import pandas
 import numpy as np
 import matplotlib.pyplot as plt
-from  pandas  import  DataFrame
-from  sklearn.decomposition  import  PCA
+import pandas
+from scipy.optimize import curve_fit
+from scipy.misc import factorial
+from __future__ import division      
+import scipy.stats as stats     # for pdfs 
 
 
-# In[153]:
-
-# Reading food.csv dataset from workspace folder and storing into variable food
-#food = pandas.read_csv('data.csv', index_col='Food')
-file = pandas.read_csv('/home/idies/workspace/AS.171.205/data/food.csv',header=None)
-file.columns=['Food', 'England', 'Wales', 'Scotland', 'N.Ireland']
-foodData = file.transpose()
-newFD = file.iloc[:,1:].values #remove first row
-values = foodData.iloc[1:,:].values # 4 x 17 matrix
+colnames = ['x']
 
 
-# In[275]:
-
-#to check that the new data is what we want
-newFD
-
-
-# In[136]:
-
-# Quick data exploration of food, will print all rows
-foodData.head(17)
+noise1 = pandas.read_csv('/home/idies/workspace/AS.171.205/data/noise_01.csv', names=colnames, header=None)
+noise2 = pandas.read_csv('/home/idies/workspace/AS.171.205/data/noise_02.csv', names=colnames, header=None)
+noise3 = pandas.read_csv('/home/idies/workspace/AS.171.205/data/noise_03.csv', names=colnames, header=None)
+noise4 = pandas.read_csv('/home/idies/workspace/AS.171.205/data/noise_04.csv', names=colnames, header=None)
+noise5 = pandas.read_csv('/home/idies/workspace/AS.171.205/data/noise_05.csv', names=colnames, header=None)
+noise10 = pandas.read_csv('/home/idies/workspace/AS.171.205/data/noise_10.csv', names=colnames, header=None)
 
 
-# In[154]:
+# In[459]:
 
-# Summary of numerical fields of food
-file.describe()
-
-
-# In[276]:
-
-#checking if the transposed data is what we want
-values
+data = np.random.poisson(100,100000)
+la = plt.hist(data, bins=100, normed=True)
+print ('                                                Spread of A Random Ideal Poisson')
 
 
-# In[284]:
+# In[450]:
 
-#normalizing the values and using PCA
-from  sklearn.decomposition  import  PCA
-
-pca = PCA(n_components=None)
-values_norm = normalize(values)
-pca.fit(values_norm)
-
-
-# In[13]:
-
-from pandas import DataFrame
-#No transposition needed, unlike the link I referenced above since I 
-#already transposed the data above
-output = DataFrame(pca.components_)
-output.index = ['Principal Component %s' % pc for pc in output.index + 1]
-output.columns = ['Time Series %s' % pc for pc in output.columns + 1]
-output
+noise1Hist = plt.hist(noise1.x, bins=100, normed=True)
+print ('                                                            Noise 1')
+print("Noise 1 Mean: ",noise1.x.mean())
+print("Noise 1 Variance: ",noise1.x.std()*noise1.x.std())
+noise1.x.var()
 
 
-# In[301]:
+# In[441]:
 
-#newValus = float(output.values)
-PCs = np.dot(output.values, newFD)
-
-
-# In[303]:
-
-marker = dict(linestyle='none', marker='D', markersize=7, color='black', alpha=5)
-
-fig, ax = plt.subplots(figsize=(10, 4))
-ax.plot(PCs[0], np.zeros_like(PCs[0]),
-        label="Scores", **marker)
-[ax.text(x, y, t) for x, y, t in zip(PCs[0], output.values[1, :], file.ix[:,1:])]
-plt.grid(True)
-ax.set_title("Principal Component Projection")
-ax.set_xlabel("First Principal Component")
-ax.set_ylabel("Projection on Vector")
-
-_ = ax.set_ylim(-.5, .5)
-marker = dict(linestyle='None', marker='D', markersize= 5, alpha=2)
+noise2Hist = plt.hist(noise2.x, bins=100, normed=True)
+print ('                                                            Noise 2')
 
 
-# In[217]:
+# In[442]:
 
-fig, ax = plt.subplots(figsize=(10, 4))
-ax.plot(PCs[0], PCs[1], label="Scores", **marker)
-plt.grid(True)
-
-ax.set_title("Principal Component Against The Other")
-ax.set_xlabel("Principal Component 1")
-ax.set_ylabel("Principal Component 2")
-
-text = [ax.text(x, y, t) for x, y, t in
-        zip(PCs[0], PCs[1]+0.5, file.ix[:,1:])]
+noise3Hist = plt.hist(noise3.x, bins=100, normed=True)
+print ('                                                            Noise 3')
 
 
-# In[216]:
+# In[443]:
 
-percent = pca.explained_variance_ratio_ * 100
-
-percent = DataFrame(percent, columns=['Variance Ratio %'], index=['PC %s' % pc for pc in np.arange(len(percent)) + 1])
-graph = percent.plot(kind='barh')
-plt.grid(True)
+noise4Hist = plt.hist(noise4.x, bins=100, normed=True)
+print ('                                                            Noise 4')
 
 
-# In[274]:
+# In[444]:
 
-series1 = output['Time Series 1']
-series1.index = output.index
-graph = series1.plot(kind='bar')
-plt.title('Time Series 1 per Food')
-plt.grid(True)
-graph.set_xticks([])
+noise5Hist = plt.hist(noise5.x, bins=100, normed=True)
+print ('                                                            Noise 5')
 
 
-# In[299]:
+# In[445]:
 
-marker = dict(linestyle='none', marker='o', markersize=7, color='blue', alpha=0.5)
-fig, ax = plt.subplots(figsize=(10, 10))
-ax.plot(output.iloc[:,0], output.iloc[:,1], label="Output", **marker)
-ax.set_xlabel("Principal Component 1")
-ax.set_ylabel("Principal Component 2")
-ax.axis([-1, 1, -1, 1])
-plt.grid(True)
-
-text = [ax.text(x, y, t) for
-        x, y, t in zip(output.iloc[:,0], output.iloc[:,1], file.index)]
+noise10Hist = plt.hist(noise10.x, bins=100, normed=True)
+print ('                                                            Noise 10')
 
 
+# In[463]:
+
+#All graphs superimposed on one
+noise1Hist = plt.hist(noise1.x, bins=100, normed=True)
+noise2Hist = plt.hist(noise2.x, bins=100, normed=True)
+noise3Hist = plt.hist(noise3.x, bins=100, normed=True)
+noise4Hist = plt.hist(noise4.x, bins=100, normed=True)
+noise5Hist = plt.hist(noise5.x, bins=100, normed=True)
+noise10ist = plt.hist(noise10.x, bins=100, normed=True)
 
 
+# ## Problem 4
+# Take a Cauchy distribution, 1/(1+x2). Show that the distribution of the sum of two
+# Cauchy variables is still a Cauchy. Do this numerically as an iPython notebook, through
+# generating a few hundred random Cauchy variables
+
+# In[426]:
+
+s = np.random.standard_cauchy(600)
+y = np.random.standard_cauchy(600)
+t = np.random.standard_cauchy(600)
+#Comparing the two separate random cauchy stored in variables, looks very, very, very similar.
+#Looks similar when after adding and also when creating cauchy values of double of s and y, so from 300 to 600
 
 
+#Loop  to show each different cauchy value added together, then sum it back to its original 
+for num in range(600):
+     s += np.random.standard_cauchy(600)
+
+
+print()        
+        
+print('                                           Proof: Random Cauchy Still Cauchy')
+#s = s[(s>-25) & (y<25)]
+plt.hist(s, bins=100)
+plt.show()
+
+print('                                           Random Cauchy of Just "S"')
+y = y[(y>-25) & (y<25)]  # just showing part of the distribution for plotting purposes
+plt.hist(y, bins=100)
+plt.show()
+
+print('                                           Still Cauchy "S+Y=Z"')
+z = z[(z>-25) & (z<25)]  # just showing part of the distribution for plotting purposes
+plt.hist(z, bins=100)
+plt.show()
+
+
+# A die is rolled 24 times. Use the Central limit theorem to estimate the probability that
+# a. The sum is greater than 84
+# b. The sum is equal to 84
+# c. Perform a hundred numerical realizations to illustrate the result
+
+# 
+# 
+
+# In[403]:
+
+import pylab
+import random
+
+size = 24
+
+counter84 = 0
+count84more = 0
+
+## One die
+singleDie = []
+sumDie = []
+sumOf24 = []
+for num in range(100):
+    total = 0
+    for i in range(size):
+        newValue = random.randint(1,6)
+        total += newValue
+    sumOf24.append(total)
+    if (total > 84): count84more += 1
+    if (total == 84): counter84 += 1
+
+print ("The Expected Value of One Die Thrown using Central Limit Theorem is 3.5, variance is 35/12")
+print ("The mean/average of 24 throws results in an expected value of 84 and variance of 35/12 * 24 = 70")
+print ()
+
+print ("This is the Probability Distribution Function of Summing to 84: ", stats.norm(84, sqrt(70)).pdf(84))
+print ("This is the Cumulative Distribution Function of Getting above 84: ", stats.norm(84, sqrt(70)).cdf(84))
+print ()
+
+print ("Actual Simulation-Num times Total is 84: ", counter84/100)
+print ("Actual Simulation-Num times Total Greater 84: ", count84more/100)
+print ()
+
+print ("Actual Results for throwing One Die", size, "times, Total 100 Simulations of 24 Throws:")
+print ("Actual Mean sample =", pylab.mean(sumOf24))
+print ("Actual Median of the sample =", pylab.median(sumOf24))
+print ("Actual Standard deviation =", pylab.std(sumOf24))
+print ("Actual Simulation-Total sum: ", total)
+print
+print
+
+pylab.hist(sumOf24, bins=15)
+pylab.xlabel('Sum of 24 Throws')
+pylab.ylabel('Frequency of Sum')
+pylab.show()
+
+
+# In[ ]:
 
 
 
