@@ -1,4 +1,4 @@
-# A die is rolled 24 times. Use the Central limit theorem to estimate the probability that
+# A die is rolled 24 times. Use the Central limit theorem to estimate the probability that 
 # a. The sum is greater than 84
 # b. The sum is equal to 84
 # c. Perform a hundred numerical realizations to illustrate the result
